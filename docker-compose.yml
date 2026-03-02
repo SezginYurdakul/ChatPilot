@@ -1,0 +1,54 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - chatpilot
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/var/www/html
+    depends_on:
+      - app
+    networks:
+      - chatpilot
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chatpilot
+      POSTGRES_USER: chatpilot
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chatpilot
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - chatpilot
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  chatpilot:
+    driver: bridge
