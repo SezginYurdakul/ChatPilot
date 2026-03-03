@@ -41,6 +41,75 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Settings Schema
+    |--------------------------------------------------------------------------
+    |
+    | Defines all available site settings with their types, defaults, and
+    | validation rules. Used by the admin panel to dynamically render
+    | settings forms. Adding a new entry here automatically exposes it
+    | in the API and frontend — no code changes needed.
+    |
+    | Bump the version whenever the schema changes so the frontend
+    | knows to refresh its cached form structure.
+    |
+    */
+    'settings_schema_version' => '1.0.0',
+    'settings_schema' => [
+        'rate_limit' => [
+            'label' => 'Rate Limiting',
+            'fields' => [
+                'cooldown_seconds' => [
+                    'label' => 'Cooldown between messages (seconds)',
+                    'type' => 'number',
+                    'default' => 3,
+                    'min' => 1,
+                    'max' => 60,
+                ],
+                'max_messages_per_hour' => [
+                    'label' => 'Max messages per hour',
+                    'type' => 'number',
+                    'default' => 50,
+                    'min' => 1,
+                    'max' => 1000,
+                ],
+            ],
+        ],
+        'widget' => [
+            'label' => 'Widget Appearance',
+            'fields' => [
+                'theme' => [
+                    'label' => 'Color theme',
+                    'type' => 'select',
+                    'default' => 'light',
+                    'options' => ['light', 'dark'],
+                ],
+                'position' => [
+                    'label' => 'Widget position',
+                    'type' => 'select',
+                    'default' => 'bottom-right',
+                    'options' => ['bottom-right', 'bottom-left'],
+                ],
+                'greeting' => [
+                    'label' => 'Welcome message',
+                    'type' => 'text',
+                    'default' => 'Hi! How can we help you?',
+                ],
+            ],
+        ],
+        'ai' => [
+            'label' => 'AI Behavior',
+            'fields' => [
+                'respond_when_offline' => [
+                    'label' => 'AI responds when admin is offline',
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AI Response Settings
     |--------------------------------------------------------------------------
     |

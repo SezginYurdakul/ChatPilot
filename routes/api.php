@@ -60,6 +60,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
         // Site management
         Route::get('sites', [Admin\SiteController::class, 'index']);
+        Route::get('sites/settings-schema', [Admin\SiteController::class, 'settingsSchema']);
         Route::post('sites', [Admin\SiteController::class, 'store']);
         Route::patch('sites/{site}', [Admin\SiteController::class, 'update']);
         Route::post('sites/{site}/regenerate-key', [Admin\SiteController::class, 'regenerateKey']);

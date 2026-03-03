@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Site;
+use App\Services\SettingsValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -32,14 +33,13 @@ class SiteController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $request->validate(array_merge([
             'name' => 'required|string|max:255',
             'domain' => 'required|string|max:255',
             'ai_provider' => 'nullable|in:gemini,openai,claude,none',
             'ai_api_key' => 'nullable|string',
             'ai_system_prompt' => 'nullable|string',
-            'settings' => 'nullable|array',
-        ]);
+        ], SettingsValidator::rules()));
 
         $site = Site::create([
             'owner_id' => $request->user()->id,
@@ -49,7 +49,9 @@ class SiteController extends Controller
             'ai_provider' => $request->input('ai_provider', 'none'),
             'ai_api_key' => $request->input('ai_api_key'),
             'ai_system_prompt' => $request->input('ai_system_prompt'),
-            'settings' => $request->input('settings'),
+            'settings' => $request->has('settings')
+                ? SettingsValidator::filterUnknownKeys($request->input('settings'))
+                : null,
         ]);
 
         return response()->json([
@@ -67,23 +69,48 @@ class SiteController extends Controller
     {
         $this->authorizeSiteOwnership($request, $site);
 
-        $request->validate([
+        $request->validate(array_merge([
             'name' => 'sometimes|string|max:255',
             'domain' => 'sometimes|string|max:255',
             'ai_provider' => 'sometimes|in:gemini,openai,claude,none',
             'ai_api_key' => 'nullable|string',
             'ai_system_prompt' => 'nullable|string',
-            'settings' => 'nullable|array',
             'is_active' => 'sometimes|boolean',
+        ], SettingsValidator::rules()));
+
+        $fields = $request->only([
+            'name', 'domain', 'ai_provider', 'ai_api_key',
+            'ai_system_prompt', 'is_active',
         ]);
 
-        $site->update($request->only([
-            'name', 'domain', 'ai_provider', 'ai_api_key',
-            'ai_system_prompt', 'settings', 'is_active',
-        ]));
+        // Deep merge filtered settings so partial updates don't erase existing values
+        // and unknown keys are rejected before reaching the database.
+        if ($request->has('settings')) {
+            $filtered = SettingsValidator::filterUnknownKeys($request->input('settings'));
+            $fields['settings'] = array_replace_recursive(
+                $site->settings ?? [],
+                $filtered,
+            );
+        }
+
+        $site->update($fields);
 
         return response()->json([
             'site' => $site,
+        ]);
+    }
+
+    /**
+     * Return the settings schema so the frontend can dynamically build forms.
+     * Each group contains fields with type, default, min/max, and options.
+     *
+     * GET /api/v1/admin/sites/settings-schema
+     */
+    public function settingsSchema(): JsonResponse
+    {
+        return response()->json([
+            'version' => config('chatpilot.settings_schema_version'),
+            'schema' => config('chatpilot.settings_schema'),
         ]);
     }
 
