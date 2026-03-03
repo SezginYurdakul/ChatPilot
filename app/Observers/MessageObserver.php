@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Jobs\ProcessAiResponse;
+use App\Jobs\TranslateMessage;
 use App\Models\Message;
 
 /**
@@ -21,13 +22,27 @@ class MessageObserver
      */
     public function created(Message $message): void
     {
-        // Only respond to visitor messages
+        $conversation = $message->conversation;
+        $site = $conversation->site;
+
+        // Admin messages: detect language and translate to visitor's language
+        if ($message->sender_type === 'admin') {
+            $visitorLang = $conversation->metadata['language'] ?? null;
+            if ($visitorLang) {
+                TranslateMessage::dispatch($message, $visitorLang);
+            }
+
+            return;
+        }
+
+        // Only handle visitor messages below
         if ($message->sender_type !== 'visitor') {
             return;
         }
 
-        $conversation = $message->conversation;
-        $site = $conversation->site;
+        // Translate visitor messages to admin's language (site default)
+        $adminLang = $site->settings['language'] ?? 'en';
+        TranslateMessage::dispatch($message, $adminLang);
 
         // Check if AI is configured for this site
         if ($site->ai_provider === 'none' || ! $site->ai_api_key) {
