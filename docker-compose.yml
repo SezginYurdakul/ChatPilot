@@ -45,6 +45,33 @@ services:
     networks:
       - chatpilot
 
+  # WebSocket server — handles real-time connections from widget and admin panel
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan reverb:start --host=0.0.0.0 --port=9090
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - redis
+    networks:
+      - chatpilot
+
+  # Queue worker — processes async jobs (AI responses, translations)
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: php artisan queue:work redis --sleep=3 --tries=3
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - chatpilot
+
 volumes:
   postgres_data:
   redis_data:
