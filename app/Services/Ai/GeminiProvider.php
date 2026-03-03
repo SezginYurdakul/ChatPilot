@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Google Gemini AI provider.
@@ -44,6 +45,14 @@ class GeminiProvider implements AiProviderInterface
                 ],
                 'contents' => $contents,
             ]);
+
+        if ($response->failed()) {
+            Log::warning('Gemini API call failed', [
+                'model' => $this->model,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+        }
 
         $response->throw();
         $data = $response->json();

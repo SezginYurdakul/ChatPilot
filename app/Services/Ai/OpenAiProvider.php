@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * OpenAI provider (GPT-4o, GPT-4o-mini, etc.).
@@ -43,6 +44,14 @@ class OpenAiProvider implements AiProviderInterface
                 'model' => $this->model,
                 'messages' => $messages,
             ]);
+
+        if ($response->failed()) {
+            Log::warning('OpenAI API call failed', [
+                'model' => $this->model,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+        }
 
         $response->throw();
         $data = $response->json();

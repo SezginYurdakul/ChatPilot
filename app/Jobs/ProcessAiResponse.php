@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Async queue job that generates an AI response for a conversation.
@@ -84,6 +85,14 @@ class ProcessAiResponse implements ShouldQueue
         } catch (\Throwable $e) {
             $error = $e->getMessage();
             $result = ['prompt_tokens' => 0, 'completion_tokens' => 0, 'model' => 'unknown'];
+
+            Log::error('AI response failed', [
+                'conversation_id' => $conversation->id,
+                'site_id' => $site->id,
+                'provider' => $site->ai_provider,
+                'error' => $error,
+                'attempt' => $this->attempts(),
+            ]);
 
             // Save a fallback message so the visitor isn't left waiting
             $fallbackMessage = $conversation->messages()->create([
