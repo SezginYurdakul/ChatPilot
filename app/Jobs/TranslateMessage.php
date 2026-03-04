@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Log;
 use Stichoza\GoogleTranslate\GoogleTranslate;
 
 /**
- * Async queue job that translates an admin message into the visitor's language.
- * Dispatched when an admin sends a message and the visitor speaks a different language.
+ * Async queue job that stores translated variants in message.translations.
+ * It never overwrites the original message text.
  */
 class TranslateMessage implements ShouldQueue
 {
@@ -31,33 +31,39 @@ class TranslateMessage implements ShouldQueue
     public function handle(): void
     {
         try {
-            $translator = new GoogleTranslate($this->targetLanguage);
-            $translated = $translator->translate($this->message->text);
+            $allowedLanguages = config('chatpilot.translation.allowed_languages', []);
+            $targetLanguage = strtolower(trim($this->targetLanguage));
+            $sourceLanguage = strtolower(trim((string) ($this->message->language ?? '')));
 
-            // Detect source language from the translator
-            $detectedLang = $translator->getLastDetectedSource();
-
-            // Save detected language on the message
-            $updates = ['language' => $detectedLang];
-
-            // Skip if source and target language are the same
-            if ($detectedLang === $this->targetLanguage) {
-                $this->message->update($updates);
-
+            // Translate only for explicitly supported language pairs.
+            if (! in_array($targetLanguage, $allowedLanguages, true)) {
                 return;
             }
 
-            if (! $translated || $translated === $this->message->text) {
-                $this->message->update($updates);
+            // Never auto-detect another language; if source is unknown, keep original.
+            if ($sourceLanguage === '' || ! in_array($sourceLanguage, $allowedLanguages, true)) {
+                return;
+            }
 
+            if ($sourceLanguage === $targetLanguage) {
+                return;
+            }
+
+            $translator = new GoogleTranslate($targetLanguage);
+            $translator->setSource($sourceLanguage);
+
+            $translated = $translator->translate($this->message->text);
+
+            if (! $translated || $translated === $this->message->text) {
                 return;
             }
 
             $translations = $this->message->translations ?? [];
-            $translations[$this->targetLanguage] = $translated;
-            $updates['translations'] = $translations;
+            $translations[$targetLanguage] = $translated;
 
-            $this->message->update($updates);
+            $this->message->update([
+                'translations' => $translations,
+            ]);
 
             MessageTranslated::dispatch($this->message);
         } catch (\Throwable $e) {

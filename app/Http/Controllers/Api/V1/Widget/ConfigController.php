@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Widget;
 
 use App\Http\Controllers\Controller;
+use App\Support\AdminPresence;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,8 +21,9 @@ class ConfigController extends Controller
         $site = $request->attributes->get('site');
 
         return response()->json([
+            'site_id' => (string) $site->id,
             'settings' => $site->settings,
-            'admin_online' => false, // TODO: Implement admin online status via Reverb
+            'admin_online' => AdminPresence::isOnline((string) $site->id),
         ]);
     }
 }

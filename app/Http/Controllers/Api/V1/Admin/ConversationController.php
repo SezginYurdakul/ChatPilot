@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Events\MessageRead;
 use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
+use App\Jobs\TranslateMessage;
 use App\Models\Conversation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,37 @@ class ConversationController extends Controller
     {
         $this->authorizeSiteOwnership($request, $conversation);
 
+        $preferredLanguage = strtolower(trim((string) $request->query('language', '')));
+        $allowedLanguages = config('chatpilot.translation.allowed_languages', []);
+
+        if ($preferredLanguage !== '' && in_array($preferredLanguage, $allowedLanguages, true)) {
+            $metadata = $conversation->metadata ?? [];
+            $metadata['admin_language'] = $preferredLanguage;
+            $conversation->update(['metadata' => $metadata]);
+        }
+
         $conversation->load('messages');
+
+        // Backfill missing visitor -> admin translations for the currently selected admin language.
+        if ($preferredLanguage !== '' && in_array($preferredLanguage, $allowedLanguages, true)) {
+            foreach ($conversation->messages as $message) {
+                if ($message->sender_type !== 'visitor') {
+                    continue;
+                }
+
+                $sourceLanguage = strtolower(trim((string) ($message->language ?? '')));
+                if ($sourceLanguage === '' || $sourceLanguage === $preferredLanguage) {
+                    continue;
+                }
+
+                $translations = $message->translations ?? [];
+                if (! empty($translations[$preferredLanguage])) {
+                    continue;
+                }
+
+                TranslateMessage::dispatch($message, $preferredLanguage);
+            }
+        }
 
         return response()->json([
             'conversation' => $conversation,
@@ -90,16 +121,27 @@ class ConversationController extends Controller
 
         $request->validate([
             'text' => 'required|string|max:2000',
+            'language' => 'nullable|string|max:5',
         ]);
 
         $message = $conversation->messages()->create([
             'sender_type' => 'admin',
             'sender_id' => $request->user()->id,
             'text' => $request->input('text'),
+            'language' => $request->input('language'),
             'created_at' => now(),
         ]);
 
-        $conversation->update(['last_message_at' => now()]);
+        if ($request->filled('language')) {
+            $metadata = $conversation->metadata ?? [];
+            $metadata['admin_language'] = strtolower($request->input('language'));
+            $conversation->update([
+                'last_message_at' => now(),
+                'metadata' => $metadata,
+            ]);
+        } else {
+            $conversation->update(['last_message_at' => now()]);
+        }
 
         // Broadcast admin's message to the visitor's widget
         MessageSent::dispatch($message);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Widget;
 
 use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
+use App\Jobs\TranslateMessage;
 use App\Models\Message;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,15 @@ class MessageController extends Controller
     {
         $conversation = $request->attributes->get('conversation');
 
+        $preferredLanguage = strtolower(trim((string) $request->query('language', '')));
+        $allowedLanguages = config('chatpilot.translation.allowed_languages', []);
+
+        if ($preferredLanguage !== '' && in_array($preferredLanguage, $allowedLanguages, true)) {
+            $metadata = $conversation->metadata ?? [];
+            $metadata['language'] = $preferredLanguage;
+            $conversation->update(['metadata' => $metadata]);
+        }
+
         $query = $conversation->messages()->orderBy('created_at');
 
         // Incremental fetch: only return messages after the given ID
@@ -33,6 +43,27 @@ class MessageController extends Controller
         }
 
         $messages = $query->get();
+
+        // Backfill missing admin -> visitor translations for currently selected visitor language.
+        if ($preferredLanguage !== '' && in_array($preferredLanguage, $allowedLanguages, true)) {
+            foreach ($messages as $message) {
+                if ($message->sender_type !== 'admin') {
+                    continue;
+                }
+
+                $sourceLanguage = strtolower(trim((string) ($message->language ?? '')));
+                if ($sourceLanguage === '' || $sourceLanguage === $preferredLanguage) {
+                    continue;
+                }
+
+                $translations = $message->translations ?? [];
+                if (! empty($translations[$preferredLanguage])) {
+                    continue;
+                }
+
+                TranslateMessage::dispatch($message, $preferredLanguage);
+            }
+        }
 
         return response()->json([
             'messages' => $messages,
@@ -63,7 +94,16 @@ class MessageController extends Controller
             'created_at' => now(),
         ]);
 
-        $conversation->update(['last_message_at' => now()]);
+        $metadata = $conversation->metadata ?? [];
+
+        if ($request->filled('language')) {
+            $metadata['language'] = $request->input('language');
+        }
+
+        $conversation->update([
+            'last_message_at' => now(),
+            'metadata' => $metadata,
+        ]);
 
         // Broadcast to all listeners on this conversation's channel
         MessageSent::dispatch($message);

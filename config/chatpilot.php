@@ -39,6 +39,10 @@ return [
         'max_messages_per_hour' => 50,
     ],
 
+    'translation' => [
+        'allowed_languages' => ['en', 'nl', 'de', 'fr', 'es', 'pt', 'tr', 'zh', 'ja', 'ko', 'ar', 'ru', 'hi'],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Settings Schema

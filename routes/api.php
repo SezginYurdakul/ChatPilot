@@ -52,6 +52,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Admin conversation management
     Route::prefix('admin')->group(function () {
+        Route::post('presence/heartbeat', [Admin\PresenceController::class, 'heartbeat']);
+        Route::post('presence/offline', [Admin\PresenceController::class, 'offline']);
         Route::get('conversations', [Admin\ConversationController::class, 'index']);
         Route::get('conversations/{conversation}', [Admin\ConversationController::class, 'show']);
         Route::patch('conversations/{conversation}', [Admin\ConversationController::class, 'update']);
