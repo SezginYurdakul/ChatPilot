@@ -594,6 +594,16 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
+### Production Runbook: DB Password Rotation
+
+Use this runbook whenever you rotate `DB_PASSWORD` in production:
+
+- [docs/db-password-rotation.md](docs/db-password-rotation.md)
+
+This keeps `.env` and PostgreSQL user credentials in sync and prevents:
+
+- `SQLSTATE[08006] [7] ... password authentication failed for user "chatpilot"`
+
 ### Widget Integration
 
 After deploying, embed the widget on any website:
