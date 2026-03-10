@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "chatpilot-api-collection",
     "name": "ChatPilot API",
-    "description": "ChatPilot API collection for widget and admin endpoints. Use ChatPilot.postman_environment.json and set baseUrl to your /api root.",
+    "description": "ChatPilot API collection for widget and admin endpoints. Errors follow {error, code, message}. Admin stats include operational metrics (5xx error rate, job failure rate). Use ChatPilot.postman_environment.json and set baseUrl to your /api root.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -64,7 +64,8 @@
               "path": [
                 "health"
               ]
-            }
+            },
+            "description": "Returns service health and version. Use as post-deploy smoke check."
           }
         }
       ]
@@ -121,7 +122,8 @@
                 "auth",
                 "login"
               ]
-            }
+            },
+            "description": "Admin authentication endpoint. Error responses include stable application code (example: CP-REQ-001, CP-AUTH-001)."
           }
         },
         {
@@ -1236,7 +1238,8 @@
                   "description": "Options: 7d, 30d, 90d"
                 }
               ]
-            }
+            },
+            "description": "Returns dashboard analytics. Includes totals, AI metrics, daily conversations, and operational observability fields: server_errors_count, server_error_rate_percent, job_failures_count, job_failure_rate_percent."
           }
         },
         {
@@ -1282,7 +1285,8 @@
                   "value": "30d"
                 }
               ]
-            }
+            },
+            "description": "Returns dashboard analytics. Includes totals, AI metrics, daily conversations, and operational observability fields: server_errors_count, server_error_rate_percent, job_failures_count, job_failure_rate_percent."
           }
         }
       ]

@@ -48,6 +48,11 @@ return [
         'allowed_languages' => ['en', 'nl', 'de', 'fr', 'es', 'pt', 'tr', 'zh', 'ja', 'ko', 'ar', 'ru', 'hi'],
     ],
 
+    'observability' => [
+        'sentry_dsn' => env('SENTRY_DSN'),
+        'alert_webhook_url' => env('CHATPILOT_ALERT_WEBHOOK_URL'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Settings Schema

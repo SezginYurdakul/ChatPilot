@@ -103,6 +103,20 @@ Base URL: `http://localhost:8080/api`
 GET /health → {"status":"ok","version":"1.0.0"}
 ```
 
+### Error Envelope
+
+API errors return a stable envelope:
+
+```json
+{
+  "error": "validation_failed",
+  "code": "CP-REQ-001",
+  "message": "The email field is required."
+}
+```
+
+`error` is machine-friendly category, `code` is the stable application error code.
+
 ### Widget API
 
 Used by the chat widget embedded on customer websites. Authenticated via `X-Site-Key` header.
@@ -171,7 +185,7 @@ All endpoints require `Authorization: Bearer <token>`.
 |--------|----------|-------------|
 | `GET` | `/v1/admin/stats?period=7d` | Dashboard statistics (`7d`, `30d`, `90d`) |
 
-**Stats response includes:** total conversations, total messages, AI message count, average AI response time, and conversations-by-day chart data.
+**Stats response includes:** total conversations, total messages, AI message count, average AI response time, conversations-by-day chart data, 5xx error rate, and queue job failure rate.
 
 ## AI Providers
 
@@ -440,6 +454,10 @@ REVERB_PORT=9090
 CHATPILOT_DEFAULT_AI_PROVIDER=none   # gemini, openai, or none
 CHATPILOT_DEFAULT_AI_KEY=            # fallback API key if site has none
 GEMINI_API_KEY=                      # for app-level Gemini access
+
+# Observability (optional)
+SENTRY_DSN=                          # enables Sentry capture when sentry-laravel is installed
+CHATPILOT_ALERT_WEBHOOK_URL=         # webhook for critical alerts (queue failures, unhandled 5xx)
 ```
 
 ## Admin Panel

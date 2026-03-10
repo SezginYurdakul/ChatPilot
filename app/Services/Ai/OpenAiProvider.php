@@ -46,10 +46,12 @@ class OpenAiProvider implements AiProviderInterface
             ]);
 
         if ($response->failed()) {
+            $responseBody = $response->body();
             Log::warning('OpenAI API call failed', [
                 'model' => $this->model,
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body_hash' => hash('sha256', $responseBody),
+                'body_length' => strlen($responseBody),
             ]);
         }
 

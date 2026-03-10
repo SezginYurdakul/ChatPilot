@@ -39,6 +39,9 @@ The codebase is identical across environments. Differences are controlled by `.e
 - Translation pipeline: queued translation with per-message translation storage
 - Real-time events: message sent/read/translated, typing, new conversation, admin status
 - Access model: `super_admin` + `admin`, user-to-site boundaries via site ownership/assignment
+- Error taxonomy: stable API error envelope with machine error key + app error code (`code`)
+- Observability: request-level correlation (`X-Request-Id`) and operational counters (API requests, 5xx, queue processed/failed)
+- Alerting: queue failure and unhandled 5xx webhook alerts, optional Sentry capture when bound
 
 ## 5) Data Model (Current)
 - `users`
@@ -54,6 +57,7 @@ The codebase is identical across environments. Differences are controlled by `.e
 - Production DB uses external named volume (`chatpilot_postgres_data`)
 - Tests must run through `docker-compose.test.yml` to avoid touching live/dev DB
 - Admin brute-force protection enabled via rate limiter (`admin-login`)
+- Production logs are routed to `stderr` via compose override
 
 ## 7) Known Operational Decisions
 - This repository is source-of-truth from dev branch/worktree
@@ -66,6 +70,8 @@ The codebase is identical across environments. Differences are controlled by `.e
 - Add smoke test in deploy script (health + DB connectivity + queue ping)
 - Add role/site assignment UI enhancements (bulk assign/remove)
 - Add CI job for `docker compose config` validation (base/prod/test)
+- Add Sentry Laravel package + release tagging for full exception tracing
+- Add alert deduplication/rate limiting for noisy failure scenarios
 
 ## 9) Definition of Done (Release)
 - Migrations run cleanly on empty DB

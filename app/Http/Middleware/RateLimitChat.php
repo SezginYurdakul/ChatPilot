@@ -5,13 +5,13 @@ namespace App\Http\Middleware;
 use App\Models\Site;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 class RateLimitChat
 {
     /**
-     * Rate limit chat messages per visitor using Redis.
+     * Rate limit chat messages per visitor using configured cache store.
      *
      * Limits are resolved in this order:
      *   1. Site-specific settings (sites.settings JSON → rate_limit)
@@ -38,21 +38,21 @@ class RateLimitChat
         $hourlyKey = "site:{$siteId}:visitor:{$visitorToken}:hourly";
 
         // Rule 1: Cooldown — max 1 message per N seconds
-        if (Redis::exists($cooldownKey)) {
+        if (Cache::has($cooldownKey)) {
             return response()->json([
                 'error' => 'rate_limit_exceeded',
-                'retry_after' => Redis::ttl($cooldownKey),
+                'retry_after' => $cooldownSeconds,
                 'message' => 'Please wait before sending another message.',
             ], 429);
         }
 
         // Rule 2: Hourly cap — max N messages per hour
-        $hourlyCount = (int) Redis::get($hourlyKey);
+        $hourlyCount = (int) Cache::get($hourlyKey, 0);
 
         if ($hourlyCount >= $maxPerHour) {
             return response()->json([
                 'error' => 'rate_limit_exceeded',
-                'retry_after' => Redis::ttl($hourlyKey),
+                'retry_after' => 3600,
                 'message' => 'Hourly message limit reached.',
             ], 429);
         }
@@ -61,12 +61,10 @@ class RateLimitChat
 
         // Update counters only on successful message creation
         if ($response->getStatusCode() === 201) {
-            Redis::setex($cooldownKey, $cooldownSeconds, 1);
+            Cache::put($cooldownKey, 1, now()->addSeconds($cooldownSeconds));
 
-            if (Redis::exists($hourlyKey)) {
-                Redis::incr($hourlyKey);
-            } else {
-                Redis::setex($hourlyKey, 3600, 1);
+            if (! Cache::add($hourlyKey, 1, now()->addHour())) {
+                Cache::increment($hourlyKey);
             }
         }
 

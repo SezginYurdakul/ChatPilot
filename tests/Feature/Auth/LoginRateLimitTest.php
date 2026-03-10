@@ -30,7 +30,8 @@ class LoginRateLimitTest extends TestCase
         ]);
 
         $throttledResponse->assertStatus(429)
-            ->assertJsonPath('error', 'too_many_requests');
+            ->assertJsonPath('error', 'too_many_requests')
+            ->assertJsonPath('code', 'CP-RATE-001');
 
         RateLimiter::clear('admin@test.com|127.0.0.1');
     }

@@ -124,7 +124,7 @@
                             <div x-show="loading" class="text-center py-12 text-gray-500">Loading statistics...</div>
                             <template x-if="stats && !loading">
                                 <div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
                                         <div class="bg-white rounded-xl border border-gray-200 p-5">
                                             <p class="text-sm text-gray-500 mb-1">Total Conversations</p>
                                             <p class="text-3xl font-bold" x-text="stats.total_conversations ?? 0"></p>
@@ -140,6 +140,14 @@
                                         <div class="bg-white rounded-xl border border-gray-200 p-5">
                                             <p class="text-sm text-gray-500 mb-1">Avg Response Time</p>
                                             <p class="text-3xl font-bold" x-text="stats.avg_response_time_seconds ? Math.round(stats.avg_response_time_seconds) + 's' : '-'"></p>
+                                        </div>
+                                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                                            <p class="text-sm text-gray-500 mb-1">5xx Error Rate</p>
+                                            <p class="text-3xl font-bold" x-text="(stats.server_error_rate_percent ?? 0) + '%'"></p>
+                                        </div>
+                                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                                            <p class="text-sm text-gray-500 mb-1">Job Failure Rate</p>
+                                            <p class="text-3xl font-bold" x-text="(stats.job_failure_rate_percent ?? 0) + '%'"></p>
                                         </div>
                                     </div>
                                     <div class="bg-white rounded-xl border border-gray-200 p-5">

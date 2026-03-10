@@ -32,6 +32,10 @@ class StatsTest extends TestCase
                 'ai_messages_count',
                 'avg_response_time',
                 'conversations_by_day',
+                'server_errors_count',
+                'server_error_rate_percent',
+                'job_failures_count',
+                'job_failure_rate_percent',
             ])
             ->assertJsonPath('total_conversations', 1)
             ->assertJsonPath('total_messages', 4)

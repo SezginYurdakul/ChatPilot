@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AiLog;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Support\OperationalMetrics;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -59,12 +60,32 @@ class StatsController extends Controller
             ->orderBy('date')
             ->get();
 
+        $apiRequests = OperationalMetrics::sum('api_requests', $days);
+        $api5xx = OperationalMetrics::sum('api_5xx', $days);
+        $queueProcessed = OperationalMetrics::sum('queue_processed', $days);
+        $queueFailed = OperationalMetrics::sum('queue_failed', $days);
+
+        $serverErrorRate = $apiRequests > 0
+            ? round(($api5xx / $apiRequests) * 100, 2)
+            : 0.0;
+
+        $jobFailureRate = ($queueProcessed + $queueFailed) > 0
+            ? round(($queueFailed / ($queueProcessed + $queueFailed)) * 100, 2)
+            : 0.0;
+
         return response()->json([
             'total_conversations' => $totalConversations,
             'total_messages' => $totalMessages,
             'ai_messages_count' => $aiMessagesCount,
+            'ai_messages' => $aiMessagesCount,
             'avg_response_time' => round($avgResponseTime ?? 0),
+            'avg_response_time_seconds' => round(($avgResponseTime ?? 0) / 1000, 2),
             'conversations_by_day' => $conversationsByDay,
+            'daily_conversations' => $conversationsByDay,
+            'server_errors_count' => $api5xx,
+            'server_error_rate_percent' => $serverErrorRate,
+            'job_failures_count' => $queueFailed,
+            'job_failure_rate_percent' => $jobFailureRate,
         ]);
     }
 }

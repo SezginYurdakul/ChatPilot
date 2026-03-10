@@ -57,6 +57,7 @@ class LoginTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonPath('error', 'validation_failed')
+            ->assertJsonPath('code', 'CP-REQ-001')
             ->assertJsonValidationErrors(['email', 'password']);
     }
 

@@ -24,6 +24,7 @@ class UserTest extends TestCase
         $response = $this->getJson('/api/v1/auth/user');
 
         $response->assertStatus(401)
-            ->assertJsonPath('error', 'unauthenticated');
+            ->assertJsonPath('error', 'unauthenticated')
+            ->assertJsonPath('code', 'CP-AUTH-001');
     }
 }

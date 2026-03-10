@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile.prod
     restart: unless-stopped
+    environment:
+      LOG_CHANNEL: stderr
+      LOG_STACK: stderr
     volumes:
       - public_assets:/var/www/html/public
 
@@ -31,6 +34,9 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile.prod
     restart: unless-stopped
+    environment:
+      LOG_CHANNEL: stderr
+      LOG_STACK: stderr
     volumes: []
 
   queue:
@@ -38,6 +44,9 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile.prod
     restart: unless-stopped
+    environment:
+      LOG_CHANNEL: stderr
+      LOG_STACK: stderr
     volumes: []
 
 volumes:
