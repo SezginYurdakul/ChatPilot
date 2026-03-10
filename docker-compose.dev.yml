@@ -1,0 +1,24 @@
+services:
+  app:
+    volumes:
+      - .:/var/www/html
+
+  nginx:
+    volumes:
+      - .:/var/www/html
+
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  reverb:
+    volumes:
+      - .:/var/www/html
+
+  queue:
+    volumes:
+      - .:/var/www/html

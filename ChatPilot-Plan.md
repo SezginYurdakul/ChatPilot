@@ -22,7 +22,7 @@ The codebase is identical across environments. Differences are controlled by `.e
 - `docker-compose.test.yml`: isolated test runner (SQLite in-memory)
 
 ### Standard commands
-- Dev up: `docker compose up -d`
+- Dev up: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d`
 - Prod up: `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
 - Tests: `docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm test`
 - Deploy script: `./deploy.sh`

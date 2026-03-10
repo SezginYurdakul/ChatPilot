@@ -71,12 +71,12 @@ git clone <repo-url> ChatPilot && cd ChatPilot
 cp .env.example .env
 
 # Start all services
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # Install dependencies & set up database
-docker compose exec app composer install
-docker compose exec app php artisan key:generate
-docker compose exec app php artisan migrate --seed
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app composer install
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan key:generate
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan migrate --seed
 
 # Verify
 curl http://localhost:8080/api/health
@@ -485,10 +485,10 @@ ChatPilot has two user roles:
 
 ```bash
 # Interactive mode
-docker compose exec app php artisan chatpilot:create-admin
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan chatpilot:create-admin
 
 # Non-interactive
-docker compose exec app php artisan chatpilot:create-admin \
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan chatpilot:create-admin \
   --name="Admin" --email="admin@example.com" --password="secret123"
 ```
 
@@ -513,7 +513,7 @@ curl -X DELETE http://localhost:8080/api/v1/admin/users/{user_id} \
 ### Via Database Seeder
 
 ```bash
-docker compose exec app php artisan db:seed
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan db:seed
 # Creates super admin: admin@chatpilot.com / password
 ```
 
@@ -614,7 +614,7 @@ Get the site key from the admin panel at `/admin#sites`.
 
 ```bash
 # Check code style
-docker compose exec app vendor/bin/pint --test
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app vendor/bin/pint --test
 
 # Run all tests safely (isolated test container + SQLite in-memory)
 docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm test

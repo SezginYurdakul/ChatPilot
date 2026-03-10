@@ -1,8 +1,5 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile.prod
     restart: unless-stopped
     environment:
       LOG_CHANNEL: stderr
@@ -12,10 +9,7 @@ services:
 
   nginx:
     restart: unless-stopped
-    ports:
-      - "${NGINX_PORT:-8090}:80"
     volumes:
-      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
       - public_assets:/var/www/html/public:ro
 
   postgres:
@@ -27,27 +21,18 @@ services:
 
   redis:
     restart: unless-stopped
-    ports: []
 
   reverb:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile.prod
     restart: unless-stopped
     environment:
       LOG_CHANNEL: stderr
       LOG_STACK: stderr
-    volumes: []
 
   queue:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile.prod
     restart: unless-stopped
     environment:
       LOG_CHANNEL: stderr
       LOG_STACK: stderr
-    volumes: []
 
 volumes:
   postgres_data:
