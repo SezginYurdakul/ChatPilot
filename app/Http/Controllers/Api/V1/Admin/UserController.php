@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +14,6 @@ class UserController extends Controller
     {
         $users = User::query()
             ->with([
-                'ownedSites:id,name,owner_id',
                 'assignedSites:id,name',
             ])
             ->orderBy('created_at')
@@ -51,7 +49,6 @@ class UserController extends Controller
         });
 
         $user->load([
-            'ownedSites:id,name,owner_id',
             'assignedSites:id,name',
         ]);
 
@@ -69,7 +66,10 @@ class UserController extends Controller
             ], 403);
         }
 
-        $user->delete();
+        DB::transaction(function () use ($user) {
+            $user->assignedSites()->detach();
+            $user->delete();
+        });
 
         return response()->json([
             'message' => 'User deleted successfully.',
@@ -78,7 +78,7 @@ class UserController extends Controller
 
     private function serializeUser(User $user): array
     {
-        $sites = $this->mergeSites($user->ownedSites, $user->assignedSites)
+        $sites = $user->assignedSites
             ->map(fn ($site) => [
                 'id' => $site->id,
                 'name' => $site->name,
@@ -89,10 +89,5 @@ class UserController extends Controller
         return array_merge($user->toArray(), [
             'sites' => $sites,
         ]);
-    }
-
-    private function mergeSites(EloquentCollection $ownedSites, EloquentCollection $assignedSites): EloquentCollection
-    {
-        return $ownedSites->concat($assignedSites)->unique('id');
     }
 }

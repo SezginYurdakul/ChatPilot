@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -14,7 +13,6 @@ class SiteFactory extends Factory
     public function definition(): array
     {
         return [
-            'owner_id' => User::factory(),
             'name' => fake()->company(),
             'domain' => fake()->domainName(),
             'api_key' => 'sk_'.Str::random(60),

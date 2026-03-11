@@ -48,9 +48,12 @@ class SiteTest extends TestCase
             ->assertJsonStructure(['site', 'api_key']);
 
         $this->assertDatabaseHas('sites', [
-            'owner_id' => $user->id,
             'name' => 'My Website',
             'domain' => 'example.com',
+        ]);
+        $this->assertDatabaseHas('site_user', [
+            'site_id' => $response->json('site.id'),
+            'user_id' => $user->id,
         ]);
     }
 

@@ -11,11 +11,6 @@ use Illuminate\Support\Str;
 
 class SiteController extends Controller
 {
-    /**
-     * List all sites owned by the authenticated user.
-     *
-     * GET /api/v1/admin/sites
-     */
     public function index(Request $request): JsonResponse
     {
         $sites = $request->user()
@@ -28,12 +23,6 @@ class SiteController extends Controller
         ]);
     }
 
-    /**
-     * Register a new site and generate a unique API key.
-     * The API key is used by the widget's X-Site-Key header.
-     *
-     * POST /api/v1/admin/sites
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate(array_merge([
@@ -45,7 +34,6 @@ class SiteController extends Controller
         ], SettingsValidator::rules()));
 
         $site = Site::create([
-            'owner_id' => $request->user()->id,
             'name' => $request->input('name'),
             'domain' => $request->input('domain'),
             'api_key' => 'sk_' . Str::random(60),
@@ -56,6 +44,7 @@ class SiteController extends Controller
                 ? SettingsValidator::filterUnknownKeys($request->input('settings'))
                 : null,
         ]);
+        $site->admins()->syncWithoutDetaching([$request->user()->id]);
 
         return response()->json([
             'site' => $site,
@@ -137,15 +126,11 @@ class SiteController extends Controller
         ]);
     }
 
-    /**
-     * Verify that the authenticated user owns this site.
-     * Aborts with 403 if the user doesn't own the site.
-     */
     private function authorizeSiteAccess(Request $request, Site $site): void
     {
         $user = $request->user();
 
-        if ($user->isSuperAdmin() || $site->owner_id === $user->id) {
+        if ($user->isSuperAdmin()) {
             return;
         }
 

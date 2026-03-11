@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('sites', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
             $table->string('domain');
             $table->string('api_key', 64)->unique();
@@ -21,7 +20,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index('owner_id');
         });
     }
 

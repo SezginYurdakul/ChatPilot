@@ -70,18 +70,18 @@ git clone <repo-url> ChatPilot && cd ChatPilot
 # Copy environment file
 cp .env.example .env
 
-# Start all services
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Build, start, and initialize the dev stack
+./deploy-dev.sh
 
-# Install dependencies & set up database
-docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app composer install
-docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan key:generate
-docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan migrate --seed
+# If you update frontend assets manually, rebuild them
+npm run build
 
 # Verify
 curl http://localhost:8080/api/health
 # → {"status":"ok","version":"1.0.0"}
 ```
+
+`deploy-dev.sh` uses the correct development compose files, installs Composer dependencies, generates the app key, runs migrations/seeds, and verifies the health endpoint.
 
 ### Services
 
@@ -156,6 +156,8 @@ All endpoints require `Authorization: Bearer <token>`.
 
 ### Admin Sites
 
+Super admin only.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/v1/admin/sites` | List all sites |
@@ -180,6 +182,8 @@ All endpoints require `Authorization: Bearer <token>`.
 | `DELETE` | `/v1/admin/users/{id}` | Delete a user (cannot delete self) |
 
 ### Admin Analytics
+
+Super admin only.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -479,7 +483,7 @@ ChatPilot has two user roles:
 | Role | Description | Can manage users? |
 |------|-------------|-------------------|
 | `super_admin` | Full access. Created via artisan command. | Yes |
-| `admin` | Site & conversation management only. Created by super admin. | No |
+| `admin` | Conversation management only. Created by super admin. | No |
 
 ### Initial Setup (First Super Admin)
 
@@ -555,13 +559,15 @@ curl http://localhost:8090/api/health
 # → {"status":"ok","version":"1.0.0"}
 ```
 
+Production PostgreSQL is bound to `127.0.0.1:5433`, not all network interfaces. Containers access it internally via `postgres:5432`, while host-machine access uses `localhost:5433`.
+
 ### Production Services
 
 | Service | Port | Description |
 |---------|------|-------------|
 | Nginx | `8090` | HTTP gateway (Cloudflare Tunnel target) |
 | PHP-FPM | — | Laravel application |
-| PostgreSQL | `5433` | Database (persistent external volume) |
+| PostgreSQL | `localhost:5433` | Database (host-local only, persistent external volume) |
 | Redis | `6379` | Queue, cache, sessions |
 | Reverb | `9090` | WebSocket server |
 | Queue | — | Async job processing |
@@ -619,6 +625,13 @@ After deploying, embed the widget on any website:
 ```
 
 Get the site key from the admin panel at `/admin#sites`.
+
+### Development Notes
+
+- Do not use `./deploy.sh` in development. That script is for production and uses `docker-compose.prod.yml`.
+- Use `./deploy-dev.sh` for local development.
+- If `/admin` fails with a missing Vite manifest, run `npm run build` to generate `public/build/manifest.json`.
+- The published widget file lives at `public/chatpilot-widget.js`. If widget source changes are built in the separate `ChatPilotWidget` project, copy the built output into this file before deploying.
 
 ## Testing
 

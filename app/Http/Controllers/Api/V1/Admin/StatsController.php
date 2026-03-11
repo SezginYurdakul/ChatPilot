@@ -13,13 +13,6 @@ use Illuminate\Support\Carbon;
 
 class StatsController extends Controller
 {
-    /**
-     * Return analytics/statistics for the admin dashboard.
-     * Aggregates data across all sites owned by the user.
-     * Supports period filter: ?period=7d (default), 30d, 90d.
-     *
-     * GET /api/v1/admin/stats?period=7d
-     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();

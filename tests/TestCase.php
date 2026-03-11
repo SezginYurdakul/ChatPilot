@@ -88,10 +88,10 @@ abstract class TestCase extends BaseTestCase
 
     protected function createSite(User $user, array $attributes = []): Site
     {
-        return Site::factory()->create(array_merge(
-            ['owner_id' => $user->id],
-            $attributes,
-        ));
+        $site = Site::factory()->create($attributes);
+        $site->admins()->syncWithoutDetaching([$user->id]);
+
+        return $site;
     }
 
     protected function createConversation(Site $site, array $attributes = []): Conversation

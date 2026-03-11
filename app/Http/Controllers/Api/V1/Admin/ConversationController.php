@@ -226,16 +226,12 @@ class ConversationController extends Controller
         ]);
     }
 
-    /**
-     * Verify that the authenticated user owns the site this conversation belongs to.
-     * Aborts with 403 if the user doesn't own the site.
-     */
     private function authorizeSiteOwnership(Request $request, Conversation $conversation): void
     {
         $userSiteIds = $request->user()->accessibleSiteIds();
 
         if (! $userSiteIds->contains($conversation->site_id)) {
-            abort(403, 'You do not own this conversation.');
+            abort(403, 'You do not have access to this conversation.');
         }
     }
 }

@@ -115,6 +115,27 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $admin->id]);
     }
 
+    public function test_deleting_user_preserves_assigned_sites(): void
+    {
+        [, $token] = $this->createAuthenticatedSuperAdmin();
+        $admin = $this->createUser(['name' => 'Site Owner']);
+        $site = $this->createSite($admin);
+
+        $response = $this->deleteJson("/api/v1/admin/users/{$admin->id}", [], $this->authHeaders($token));
+
+        $response->assertOk()
+            ->assertJson(['message' => 'User deleted successfully.']);
+
+        $this->assertDatabaseMissing('users', ['id' => $admin->id]);
+        $this->assertDatabaseHas('sites', [
+            'id' => $site->id,
+        ]);
+        $this->assertDatabaseMissing('site_user', [
+            'site_id' => $site->id,
+            'user_id' => $admin->id,
+        ]);
+    }
+
     public function test_super_admin_cannot_delete_self(): void
     {
         [$superAdmin, $token] = $this->createAuthenticatedSuperAdmin();
