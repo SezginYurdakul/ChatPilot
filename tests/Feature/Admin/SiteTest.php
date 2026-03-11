@@ -9,7 +9,7 @@ class SiteTest extends TestCase
 {
     public function test_list_sites(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $this->createSite($user);
         $this->createSite($user);
 
@@ -19,9 +19,9 @@ class SiteTest extends TestCase
             ->assertJsonCount(2, 'sites');
     }
 
-    public function test_list_sites_only_shows_owned(): void
+    public function test_super_admin_list_sites_includes_all_sites(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $this->createSite($user);
 
         $otherUser = $this->createUser();
@@ -30,12 +30,12 @@ class SiteTest extends TestCase
         $response = $this->getJson('/api/v1/admin/sites', $this->authHeaders($token));
 
         $response->assertOk()
-            ->assertJsonCount(1, 'sites');
+            ->assertJsonCount(2, 'sites');
     }
 
     public function test_create_site(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
 
         $response = $this->postJson('/api/v1/admin/sites', [
             'name' => 'My Website',
@@ -56,7 +56,7 @@ class SiteTest extends TestCase
 
     public function test_create_site_with_ai_config(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
 
         $response = $this->postJson('/api/v1/admin/sites', [
             'name' => 'AI Site',
@@ -72,7 +72,7 @@ class SiteTest extends TestCase
 
     public function test_create_site_with_settings(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
 
         $response = $this->postJson('/api/v1/admin/sites', [
             'name' => 'Configured Site',
@@ -92,7 +92,7 @@ class SiteTest extends TestCase
 
     public function test_create_site_filters_unknown_settings_keys(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
 
         $response = $this->postJson('/api/v1/admin/sites', [
             'name' => 'Filtered Site',
@@ -113,7 +113,7 @@ class SiteTest extends TestCase
 
     public function test_create_site_validation(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
 
         $response = $this->postJson('/api/v1/admin/sites', [], $this->authHeaders($token));
 
@@ -123,7 +123,7 @@ class SiteTest extends TestCase
 
     public function test_update_site(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $site = $this->createSite($user);
 
         $response = $this->patchJson(
@@ -136,15 +136,13 @@ class SiteTest extends TestCase
             ->assertJsonPath('site.name', 'Updated Name');
     }
 
-    public function test_update_site_of_other_user_returns_403(): void
+    public function test_admin_cannot_update_sites(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
-
-        $otherUser = $this->createUser();
-        $otherSite = $this->createSite($otherUser);
+        [$admin, $token] = $this->createAuthenticatedUser(['role' => 'admin']);
+        $site = $this->createSite($this->createSuperAdmin());
 
         $response = $this->patchJson(
-            "/api/v1/admin/sites/{$otherSite->id}",
+            "/api/v1/admin/sites/{$site->id}",
             ['name' => 'Hacked Name'],
             $this->authHeaders($token),
         );
@@ -154,7 +152,7 @@ class SiteTest extends TestCase
 
     public function test_regenerate_api_key(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $site = $this->createSite($user);
         $oldKey = $site->api_key;
 
@@ -171,15 +169,13 @@ class SiteTest extends TestCase
         $this->assertNotEquals($oldKey, $site->api_key);
     }
 
-    public function test_regenerate_key_of_other_user_returns_403(): void
+    public function test_admin_cannot_regenerate_api_key(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
-
-        $otherUser = $this->createUser();
-        $otherSite = $this->createSite($otherUser);
+        [$admin, $token] = $this->createAuthenticatedUser(['role' => 'admin']);
+        $site = $this->createSite($this->createSuperAdmin());
 
         $response = $this->postJson(
-            "/api/v1/admin/sites/{$otherSite->id}/regenerate-key",
+            "/api/v1/admin/sites/{$site->id}/regenerate-key",
             [],
             $this->authHeaders($token),
         );
@@ -189,7 +185,7 @@ class SiteTest extends TestCase
 
     public function test_settings_schema_endpoint(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
 
         $response = $this->getJson('/api/v1/admin/sites/settings-schema', $this->authHeaders($token));
 
@@ -212,7 +208,7 @@ class SiteTest extends TestCase
             ->assertJsonCount(2, 'sites');
     }
 
-    public function test_assigned_admin_can_list_assigned_sites(): void
+    public function test_assigned_admin_cannot_list_sites(): void
     {
         $superAdmin = $this->createSuperAdmin();
         $assignedAdmin = $this->createUser();
@@ -223,9 +219,6 @@ class SiteTest extends TestCase
 
         $response = $this->getJson('/api/v1/admin/sites', $this->authHeaders($token));
 
-        $response->assertOk()
-            ->assertJsonCount(1, 'sites')
-            ->assertJsonFragment(['id' => $assignedSite->id])
-            ->assertJsonMissing(['id' => $otherSite->id]);
+        $response->assertStatus(403);
     }
 }

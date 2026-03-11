@@ -9,7 +9,7 @@ class StatsTest extends TestCase
 {
     public function test_get_stats(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $site = $this->createSite($user);
         $conversation = $this->createConversation($site);
 
@@ -44,7 +44,7 @@ class StatsTest extends TestCase
 
     public function test_get_stats_with_period_filter(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $site = $this->createSite($user);
 
         // Conversation within 7 days
@@ -63,9 +63,9 @@ class StatsTest extends TestCase
             ->assertJsonPath('total_conversations', 2);
     }
 
-    public function test_stats_only_shows_owned_sites_data(): void
+    public function test_super_admin_stats_include_all_sites_data(): void
     {
-        [$user, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedSuperAdmin();
         $ownSite = $this->createSite($user);
         $this->createConversation($ownSite);
 
@@ -76,7 +76,7 @@ class StatsTest extends TestCase
         $response = $this->getJson('/api/v1/admin/stats', $this->authHeaders($token));
 
         $response->assertOk()
-            ->assertJsonPath('total_conversations', 1);
+            ->assertJsonPath('total_conversations', 2);
     }
 
     public function test_stats_requires_authentication(): void
@@ -86,7 +86,7 @@ class StatsTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_stats_include_assigned_sites_data(): void
+    public function test_admin_cannot_access_stats(): void
     {
         $superAdmin = $this->createSuperAdmin();
         $admin = $this->createUser();
@@ -97,7 +97,6 @@ class StatsTest extends TestCase
 
         $response = $this->getJson('/api/v1/admin/stats', $this->authHeaders($token));
 
-        $response->assertOk()
-            ->assertJsonPath('total_conversations', 1);
+        $response->assertStatus(403);
     }
 }

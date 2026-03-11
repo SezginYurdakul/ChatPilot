@@ -63,18 +63,19 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::post('conversations/{conversation}/messages', [Admin\ConversationController::class, 'sendMessage']);
         Route::post('conversations/{conversation}/read', [Admin\ConversationController::class, 'markAsRead']);
 
-        // Site management
-        Route::get('sites', [Admin\SiteController::class, 'index']);
-        Route::get('sites/settings-schema', [Admin\SiteController::class, 'settingsSchema']);
-        Route::post('sites', [Admin\SiteController::class, 'store']);
-        Route::patch('sites/{site}', [Admin\SiteController::class, 'update']);
-        Route::post('sites/{site}/regenerate-key', [Admin\SiteController::class, 'regenerateKey']);
-
-        // Analytics
-        Route::get('stats', [Admin\StatsController::class, 'index']);
-
-        // User management (super admin only)
+        // Super admin only management endpoints
         Route::middleware('super_admin')->group(function () {
+            // Site management
+            Route::get('sites', [Admin\SiteController::class, 'index']);
+            Route::get('sites/settings-schema', [Admin\SiteController::class, 'settingsSchema']);
+            Route::post('sites', [Admin\SiteController::class, 'store']);
+            Route::patch('sites/{site}', [Admin\SiteController::class, 'update']);
+            Route::post('sites/{site}/regenerate-key', [Admin\SiteController::class, 'regenerateKey']);
+
+            // Analytics
+            Route::get('stats', [Admin\StatsController::class, 'index']);
+
+            // User management
             Route::get('users', [Admin\UserController::class, 'index']);
             Route::post('users', [Admin\UserController::class, 'store']);
             Route::delete('users/{user}', [Admin\UserController::class, 'destroy']);
