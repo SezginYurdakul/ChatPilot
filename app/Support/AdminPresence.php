@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Cache;
 
 class AdminPresence
 {
-    private const TTL_SECONDS = 45;
+    private const TTL_SECONDS = 30;
 
     private static function key(string $siteId): string
     {

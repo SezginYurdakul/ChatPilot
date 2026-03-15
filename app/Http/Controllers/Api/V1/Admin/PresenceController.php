@@ -21,8 +21,11 @@ class PresenceController extends Controller
         $siteIds = $request->user()->accessibleSiteIds();
 
         foreach ($siteIds as $siteId) {
+            $wasOnline = AdminPresence::isOnline((string) $siteId);
             AdminPresence::heartbeat($siteId);
-            AdminStatusChanged::dispatch((string) $siteId, true);
+            if (! $wasOnline) {
+                AdminStatusChanged::dispatch((string) $siteId, true);
+            }
         }
 
         return response()->json([
@@ -41,8 +44,11 @@ class PresenceController extends Controller
         $siteIds = $request->user()->accessibleSiteIds();
 
         foreach ($siteIds as $siteId) {
+            $wasOnline = AdminPresence::isOnline((string) $siteId);
             AdminPresence::markOffline($siteId);
-            AdminStatusChanged::dispatch((string) $siteId, false);
+            if ($wasOnline) {
+                AdminStatusChanged::dispatch((string) $siteId, false);
+            }
         }
 
         return response()->json([

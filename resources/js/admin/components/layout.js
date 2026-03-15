@@ -34,7 +34,7 @@ export function layoutComponent() {
             }
 
             this.sendHeartbeat()
-            this._heartbeatInterval = setInterval(() => this.sendHeartbeat(), 15000)
+            this._heartbeatInterval = setInterval(() => this.sendHeartbeat(), 10000)
         },
 
         stopHeartbeat() {
