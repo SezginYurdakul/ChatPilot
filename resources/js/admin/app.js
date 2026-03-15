@@ -1,3 +1,4 @@
+import '../bootstrap'
 import Alpine from 'alpinejs'
 import { api } from './api.js'
 import { loginPage } from './pages/login.js'
