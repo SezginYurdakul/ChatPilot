@@ -74,6 +74,7 @@ cp .env.example .env
 ./deploy-dev.sh
 
 # If you update frontend assets manually, rebuild them
+# Node.js 22 is required for Vite 7
 npm run build
 
 # Verify

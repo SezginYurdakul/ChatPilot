@@ -102,9 +102,12 @@ Alpine.data('app', () => ({
         window.location.hash = `#${this.defaultPage()}`
     },
 
-    async logout() {
-        // Mark admin offline before revoking auth token.
-        await api.post('/v1/admin/presence/offline').catch(() => {})
+    async logout(options = {}) {
+        if (!options.skipOffline) {
+            // Mark admin offline before revoking auth token.
+            await api.post('/v1/admin/presence/offline').catch(() => {})
+        }
+
         await api.post('/v1/auth/logout').catch(() => {})
         this.token = null
         this.user = null
