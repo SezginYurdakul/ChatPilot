@@ -74,6 +74,48 @@ class PresenceTest extends TestCase
         $this->assertTrue(AdminPresence::isOnline($site2->id));
     }
 
+    public function test_heartbeat_only_broadcasts_when_admin_transitions_to_online(): void
+    {
+        Event::fake([AdminStatusChanged::class]);
+
+        [$user, $token] = $this->createAuthenticatedUser();
+        $site = $this->createSite($user);
+
+        $this->postJson('/api/v1/admin/presence/heartbeat', [], $this->authHeaders($token))
+            ->assertOk();
+
+        Event::assertDispatchedTimes(AdminStatusChanged::class, 1);
+
+        Event::fake([AdminStatusChanged::class]);
+
+        $this->postJson('/api/v1/admin/presence/heartbeat', [], $this->authHeaders($token))
+            ->assertOk();
+
+        Event::assertNotDispatched(AdminStatusChanged::class);
+    }
+
+    public function test_offline_only_broadcasts_when_admin_transitions_to_offline(): void
+    {
+        Event::fake([AdminStatusChanged::class]);
+
+        [$user, $token] = $this->createAuthenticatedUser();
+        $site = $this->createSite($user);
+
+        AdminPresence::heartbeat($site->id);
+
+        $this->postJson('/api/v1/admin/presence/offline', [], $this->authHeaders($token))
+            ->assertOk();
+
+        Event::assertDispatchedTimes(AdminStatusChanged::class, 1);
+
+        Event::fake([AdminStatusChanged::class]);
+
+        $this->postJson('/api/v1/admin/presence/offline', [], $this->authHeaders($token))
+            ->assertOk();
+
+        Event::assertNotDispatched(AdminStatusChanged::class);
+    }
+
     public function test_heartbeat_marks_assigned_sites_online(): void
     {
         Event::fake([AdminStatusChanged::class]);

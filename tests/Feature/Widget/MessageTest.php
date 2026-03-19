@@ -4,6 +4,7 @@ namespace Tests\Feature\Widget;
 
 use App\Events\MessageSent;
 use App\Models\Message;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -34,6 +35,13 @@ class MessageTest extends TestCase
         ]);
 
         Event::assertDispatched(MessageSent::class);
+    }
+
+    public function test_message_sent_event_is_broadcast_immediately(): void
+    {
+        $event = new MessageSent(Message::factory()->make());
+
+        $this->assertInstanceOf(ShouldBroadcastNow::class, $event);
     }
 
     public function test_get_messages(): void

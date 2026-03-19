@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Events\MessageRead;
 use App\Events\MessageSent;
 use App\Models\Message;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -63,6 +64,13 @@ class ConversationMessageTest extends TestCase
         );
 
         $response->assertStatus(403);
+    }
+
+    public function test_message_sent_event_is_broadcast_immediately(): void
+    {
+        $event = new MessageSent(Message::factory()->make());
+
+        $this->assertInstanceOf(ShouldBroadcastNow::class, $event);
     }
 
     public function test_mark_messages_as_read(): void
